@@ -289,7 +289,7 @@ function renderTop() {
 document.querySelectorAll('[data-kind]').forEach(b => b.onclick = () => { kind = b.dataset.kind; reset(); });
 window.addEventListener('hashchange', () => { if (MK[location.hash.slice(1)]) { mk = location.hash.slice(1); reset(); } });
 $('q').addEventListener('input', () => { group = null; renderList(); renderPick(); });
-function reset() { $('oTo').value = store.get(`order_to_${mk}`, ''); group = null; step = 'body'; $('q').value = ''; cart = store.get(cartKey(), []); firstColor = store.get(`order_color_${mk}_${kind}`, null); renderAll(); }
+function reset() { $('oTo').value = store.get(`order_to_${mk}`, ''); group = null; step = 'body'; $('q').value = ''; cart = store.get(cartKey(), []); firstColor = store.get(`order_color_${mk}_${kind}`, null); renderAll(); if (window.toListRefresh) toListRefresh(); }
 
 /* 2. シリーズごとに柄を並べる */
 function renderList() {
@@ -541,6 +541,7 @@ reset();
   r.addEventListener('input', () => { apply(+r.value); try { localStorage.setItem('ui_bg', r.value); } catch (e) {} });
 })();
 </script>
+<script src="to-list.js"></script>
 <script src="disclaimer.js"></script>
 </body>
 </html>

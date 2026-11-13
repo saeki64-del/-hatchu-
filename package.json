@@ -1,0 +1,42 @@
+{
+  "name": "hatchu",
+  "productName": "発注書",
+  "version": "1.11.0",
+  "description": "外装部材の発注書（城東テクノ・ニチハ・ケイミュー・神島化学）Windows版",
+  "author": "佐伯外装",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis portable --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "^45.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "jp.saeki-gaisou.order",
+    "productName": "発注書",
+    "files": [
+      "main.js",
+      "web/**/*"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "icon": "web/icon-512.png",
+      "artifactName": "hatchu-setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "shortcutName": "発注書"
+    },
+    "portable": {
+      "artifactName": "hatchu-portable.exe"
+    }
+  }
+}

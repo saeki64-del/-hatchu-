@@ -1,0 +1,39 @@
+# main に push すると、Windows版をビルドして Releases に公開する
+# いつでも最新版：https://github.com/saeki64-del/-hatchu-/releases/latest
+name: Windows版をビルドして公開
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'main.js'
+      - 'package.json'
+      - '.github/workflows/build.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run dist
+      - name: Releases に公開（同じ版がもうあれば入れ替え）
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ver=$(node -p "require('./package.json').version")
+          gh release delete "v$ver" --yes --cleanup-tag || true
+          gh release create "v$ver" dist/hatchu-setup.exe dist/hatchu-portable.exe \
+            --target "$GITHUB_SHA" \
+            --title "発注書 $ver（Windows版）" \
+            --latest \
+            --notes "hatchu-setup.exe はインストール版（デスクトップにアイコンができます）、hatchu-portable.exe はインストール不要版です。使い方と免責事項は https://github.com/saeki64-del/-hatchu- をご覧ください。"

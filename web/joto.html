@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>城東テクノ 発注書</title>
+<style>
+  :root { --main:#2e6b3a; --line:#b9c4bb; --bg:#e3e9e4; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Hiragino Sans","Noto Sans JP",Meiryo,sans-serif; background:var(--bg); color:#222; }
+  header { background:var(--main); color:#fff; padding:12px 16px; position:sticky; top:0; z-index:5; display:flex; justify-content:space-between; align-items:center; }
+  header h1 { margin:0; font-size:18px; }
+  header a { color:#fff; font-size:14px; }
+  nav.makers a { text-decoration:none; padding:6px 10px; border:1px solid rgba(255,255,255,.6); border-radius:16px; white-space:nowrap; }
+  nav.makers a.on { background:#fff; color:var(--main); font-weight:bold; }
+  main { max-width:900px; margin:0 auto; padding:10px; }
+  section { background:var(--card,#fff); border:1px solid var(--line); border-radius:10px; padding:12px; margin-bottom:12px; }
+  /* 明るさのつまみ */
+  /* カードを背景から浮かせる・発注書の品名の列をつぶさない */
+  .card { border-color:#aab4bf; box-shadow:0 1px 3px rgba(0,0,0,.14); }
+  .osheet th:nth-child(3), .osheet td:nth-child(3) { min-width:6.5em; }
+  .osheet td:nth-child(4) { min-width:6em; }
+  .bgctl { display:flex; align-items:center; gap:6px; color:#fff; font-size:13px; white-space:nowrap; }
+  .bgctl input { width:110px; padding:0; accent-color:#fff; }
+  h2 { font-size:18px; margin:0 0 10px; display:flex; align-items:center; gap:8px; }
+  .num { display:inline-flex; width:28px; height:28px; border-radius:50%; background:var(--main); color:#fff; align-items:center; justify-content:center; font-size:15px; }
+  button { font-family:inherit; cursor:pointer; border-radius:8px; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chip { background:#fff; color:var(--main); border:2px solid var(--main); font-size:15px; padding:9px 12px; }
+  .chip.on { background:var(--main); color:#fff; }
+  .card { display:block; width:100%; text-align:left; background:#fff; border:1px solid var(--line); padding:10px; margin-bottom:6px; font-size:15px; }
+  .card.on { border:2px solid var(--main); background:#f0f7f1; }
+  .card small { display:block; color:#666; font-size:12px; margin-top:2px; }
+  .code { font-family:Consolas,monospace; font-weight:bold; }
+  input, textarea, select { width:100%; font-size:16px; padding:10px; border:1px solid #bbb; border-radius:6px; font-family:inherit; }
+  label { font-size:12px; color:#555; display:block; margin-top:6px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:4px 12px; }
+  .note { font-size:12px; color:#666; }
+  .big { font-size:16px; }
+  .stepper { display:flex; align-items:center; gap:14px; }
+  .stepper button { width:48px; height:48px; font-size:24px; border:0; background:var(--main); color:#fff; border-radius:50%; }
+  .stepper input { width:90px; text-align:center; font-size:22px; font-weight:bold; }
+  .primary { background:var(--main); color:#fff; border:0; font-size:17px; padding:14px 18px; width:100%; margin-top:10px; }
+  .sub { background:#fff; color:var(--main); border:1px solid var(--main); font-size:14px; padding:8px 12px; }
+  .row-btns { display:flex; gap:8px; flex-wrap:wrap; }
+  .cart-row { display:flex; justify-content:space-between; gap:8px; padding:10px 0; border-bottom:1px solid #eee; align-items:center; }
+  .cart-row .q { display:flex; align-items:center; gap:6px; white-space:nowrap; }
+  .cart-row .q button { width:34px; height:34px; border:1px solid var(--line); background:#fff; font-size:18px; }
+  /* 見分けやすい薄い色：本体＝青、役物＝緑 */
+  .card.body { background:#eef5fc; border-color:#bcd3ea; }
+  .card.acc  { background:#f1f8ee; border-color:#c5dfbd; }
+  .card.body.on { background:#d6e8f9; border:2px solid #2f6ea5; }
+  .card.acc.on  { background:#dcefd5; border:2px solid var(--main); }
+  .cart-row.body { background:#eef5fc; }
+  .cart-row.acc  { background:#f1f8ee; }
+  .cart-row { padding-left:6px; padding-right:6px; border-radius:6px; margin-bottom:4px; }
+  tr.body td { background:#eef5fc; }
+  tr.acc td  { background:#f4faf1; }
+  td.code { white-space:nowrap; }
+  .legend { font-size:12px; margin:4px 0; }
+  .legend span { display:inline-block; padding:2px 8px; border-radius:4px; margin-right:6px; }
+  #secPick { background:#fffdf3; }
+  @media print { tr.body td, tr.acc td { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+  .subh { font-size:15px; color:var(--main); margin:12px 0 6px; border-left:4px solid var(--main); padding-left:6px; }
+  .del, .cart-row .q button.del { background:#c0392b; color:#fff; border:0; padding:6px 10px; font-size:13px; width:auto; }
+  .cart-row { flex-wrap:wrap; } .cart-row .q { margin-left:auto; }
+  .jimg { display:inline-block; vertical-align:middle; border:2px solid #7d8794; box-shadow:0 1px 4px rgba(0,0,0,.35); border-radius:3px; background-color:#fff; background-repeat:no-repeat; flex:0 0 auto; }
+  .card.withimg { display:flex; gap:10px; align-items:center; }
+  /* よく使う物：薄い黄色 */
+  .card.fav { background:#fff8dc; border-color:#ecd98f; }
+  .card.body.fav, .card.acc.fav { box-shadow:inset 6px 0 0 #f2cf5b; }
+  .chip.fav:not(.on) { background:#fff8dc; }
+  .favb { display:inline-block; background:#fff1b8; color:#7a5d00; border-radius:4px; padding:0 6px; font-size:11px; margin-left:6px; font-weight:normal; vertical-align:middle; }
+  .osheet { background:#fff; padding:16px; }
+  .otitle { text-align:center; font-size:22px; letter-spacing:.3em; }
+  .ohead { display:flex; justify-content:space-between; gap:10px; margin:10px 0; }
+  .oto { font-size:17px; border-bottom:1px solid #222; }
+  .oright { text-align:right; font-size:13px; }
+  table { border-collapse:collapse; width:100%; font-size:14px; margin:8px 0; }
+  th, td { border:1px solid #999; padding:5px 6px; text-align:left; }
+  th { background:#eef3ee; }
+  td.n { text-align:right; white-space:nowrap; }
+  #toast { position:fixed; left:50%; bottom:20px; transform:translateX(-50%); background:var(--main); color:#fff; padding:10px 16px; border-radius:6px; display:none; z-index:99; max-width:90%; }
+  @media print {
+    header, .no-print { display:none !important; }
+    section { border:0; padding:0; }
+    body { background:#fff; }
+  }
+</style>
+</head>
+<body>
+<header style="flex-wrap:wrap;gap:6px">
+  <h1>城東テクノ 発注書</h1><span style="display:flex;gap:12px;align-items:center"><label class="bgctl no-print" title="背景の明るさ">☀<input type="range" id="bgRange" min="0" max="100" aria-label="背景の明るさ">●</label><a href="#cart" class="no-print">発注内容 (<span id="cartN">0</span>)</a></span>
+  <nav class="makers no-print" style="width:100%;display:flex;gap:6px;overflow-x:auto">
+    <a class="on" href="joto.html">城東テクノ</a><a href="maker.html#nichiha">ニチハ</a><a href="maker.html#kmew">ケイミュー</a><a href="maker.html#konoshima">神島化学</a>
+  </nav>
+</header>
+<main>
+  <section class="no-print">
+    <h2><span class="num">1</span>分類を選ぶ</h2>
+    <div class="chips" id="cats"></div>
+    <input id="q" placeholder="🔍 品番・名前で探す（例：WMF-N　軒天　出隅）" style="margin-top:10px">
+  </section>
+
+  <section class="no-print" id="secSeries">
+    <h2><span class="num">2</span>商品を選ぶ</h2>
+    <div id="series"></div>
+    <div id="items"></div>
+  </section>
+
+  <section class="no-print" id="secPick" style="display:none">
+    <h2><span class="num">3</span>色と数量</h2>
+    <div id="pickInfo" class="big"></div>
+    <div id="colorBox">
+      <label>色</label>
+      <div class="chips" id="colors"></div>
+      <p class="note" id="colorMemo"></p>
+    </div>
+    <label>数量</label>
+    <div class="stepper"><button id="minus">－</button><input id="qty" type="number" value="1" min="1"><button id="plus">＋</button><span id="unitLabel" class="big"></span></div>
+    <p class="note" id="qtyNote"></p>
+    <button class="primary" id="add">発注内容に追加して次へ</button>
+    <button class="sub" id="skip" style="width:100%;margin-top:8px;display:none">いらない（次へ）</button>
+    <button class="sub" id="back" style="width:100%;margin-top:8px">← 前に戻る</button>
+    <p class="note" id="queueInfo"></p>
+  </section>
+
+  <section id="cart">
+    <h2 class="no-print"><span class="num">4</span>発注内容</h2>
+    <div id="cartList" class="no-print"></div>
+    <div class="no-print">
+      <label>送信先（会社名）</label><input id="oTo" placeholder="例：○○建材株式会社">
+      <label>邸名</label><input id="oGenba" placeholder="例：山田様邸">
+      <div class="row-btns" style="margin-top:10px">
+        <button class="primary" id="pPdf" style="width:auto;margin-top:0;padding:10px 16px;font-size:15px">PDFで送る</button>
+        <button class="sub" id="pPrint">印刷</button>
+        <button class="sub" id="pCopy">コピー（Excel用）</button>
+        <button class="sub" id="pCsv">CSVで保存</button>
+        <button class="sub" id="pClear">発注内容を全部消す</button>
+      </div>
+    </div>
+    <div id="sheet" style="margin-top:12px"></div>
+  </section>
+</main>
+<div id="toast"></div>
+
+<script src="joto-parts.js"></script>
+<script src="thumbs/joto-index.js"></script>
+<script>
+// 城東テクノの商品画像（シリーズの写真）
+function jimg(code, w = 64) {
+  if (typeof JOTO_THUMB === 'undefined' || JOTO_THUMB[code] == null) return '';
+  // 写真はシリーズの本体の写真なので、出隅・エンドキャップなどの役物には出さない
+  const it = typeof P !== 'undefined' && P.find(x => x.code === code);
+  if (it && (it.parent || /^(出隅|入隅|面取出隅|中間ジョイナー|エンドキャップ|ジョイントカバー|コーナー|頂部)/.test(it.type))) return '';
+  const i = JOTO_THUMB[code], h = Math.round(w * 0.8);
+  return `<span class="jimg" style="width:${w}px;height:${h}px;background-image:url(thumbs/joto.jpg);background-size:${w * 10}px ${h * JOTO_ROWS}px;background-position:-${(i % 10) * w}px -${Math.floor(i / 10) * h}px"></span>`;
+}
+/* 城東テクノの部材を、分類→商品→色→数量 で選んで発注書を作る */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function notify(m, ms) { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = 'none', ms || 2500); }
+
+// JOTO_PARTS: [品番, 分類, シリーズ, タイプ・品名, 寸法, 入数, 入数の単位, 数える単位, 長さmm, 色]
+const P = JOTO_PARTS.map(r => ({ code: r[0], cat: r[1], series: r[2], type: r[3], size: r[4], pack: r[5], packUnit: r[6], unit: r[7] || '個', len: r[8], parent: r[10] || '',
+  colors: (r[9] || '').split('|').filter(Boolean).map(x => { const [c, ...n] = x.split(':'); return { code: c, name: n.join(':') }; }) }));
+// よく使う分類を先に並べる
+const ORDER = ['水切り', '軒天換気材（非防火）', '軒天換気材（防火認定品）', '通気見切', '目地ジョイナー', 'オーバーハング', '笠木換気材'];
+const CATS = [...new Set(P.map(p => p.cat))].sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99));
+let cat = CATS[0], series = null, pick = null, color = null, unitMode = 'piece', body0 = null;
+let cart = [];
+try { cart = JSON.parse(localStorage.getItem('joto_cart')) || []; } catch (e) {}
+const saveCart = () => { try { localStorage.setItem('joto_cart', JSON.stringify(cart)); } catch (e) {} };
+// よく使う物：発注内容に追加した回数（この端末に覚えておく）
+let usage = {};
+try { usage = JSON.parse(localStorage.getItem('joto_usage')) || {}; } catch (e) {}
+if (!Object.keys(usage).length && cart.length) cart.forEach(c => { usage[c.code] = (usage[c.code] || 0) + 1; });   // 最初は今の発注内容から
+const saveUsage = () => { try { localStorage.setItem('joto_usage', JSON.stringify(usage)); } catch (e) {} };
+const useN = code => usage[code] || 0;
+const seriesUse = name => P.filter(p => p.series === name).reduce((a, p) => a + useN(p.code), 0);
+const catUse = c => P.filter(p => p.cat === c).reduce((a, p) => a + useN(p.code), 0);
+const favBadge = n => n ? `<span class="favb">★よく使う${n > 1 ? `（${n}回）` : ''}</span>` : '';
+// 古いデータ（品番と品名が1行ずれていた）で入れた品目を、本来選んだ品目の品番に直す
+let fixedRows = [];
+function fixOldCart() {
+  if (typeof JOTO_FIX === 'undefined') return;
+  cart.forEach(c => {
+    const to = JOTO_FIX[`${c.code}|${c.series || ''}|${c.type || ''}`];
+    if (!to) return;
+    const p = JOTO_PARTS.find(r => r[0] === to && r[2] === c.series);
+    if (!p) return;
+    fixedRows.push(`${c.code} → ${to}`);
+    c.code = to; c.type = p[3]; c.name = `${p[2]} ${p[3]}`.trim(); c.kind = p[10] ? 'acc' : 'body';
+  });
+  if (fixedRows.length) saveCart();
+}
+
+/* 1. 分類 */
+function renderCats() {
+  $('cats').innerHTML = CATS.map(c => `<button class="chip ${c === cat && !$('q').value ? 'on' : ''} ${catUse(c) ? 'fav' : ''}" data-cat="${esc(c)}">${catUse(c) ? '★' : ''}${esc(c)}</button>`).join('');
+  $('cats').querySelectorAll('[data-cat]').forEach(b => b.onclick = () => { cat = b.dataset.cat; $('q').value = ''; series = null; pick = null; queue = []; renderAll(); window.scrollTo({ top: $('secSeries').offsetTop - 60, behavior: 'smooth' }); });
+}
+$('q').addEventListener('input', () => { series = null; pick = null; renderAll(); });
+
+/* 2. シリーズ→品番 */
+function renderSeries() {
+  const words = $('q').value.trim().toLowerCase().split(/[\s　]+/).filter(Boolean);
+  const list = P.filter(p => words.length ? words.every(w => [p.code, p.cat, p.series, p.type, p.size].join(' ').toLowerCase().includes(w)) : p.cat === cat);
+  const names0 = [...new Set(list.map(p => p.series))];
+  const names = names0.slice().sort((a, b) => seriesUse(b) - seriesUse(a) || names0.indexOf(a) - names0.indexOf(b));   // よく使うシリーズを上に
+  if (!series || !names.includes(series)) series = words.length && names.length === 1 ? names[0] : null;
+  $('series').innerHTML = series ? `<button class="sub" id="backSeries">← ${esc(cat)} の一覧に戻る</button><p class="big"><b>${esc(series)}</b></p>`
+    : names.map(n => { const its = list.filter(p => p.series === n);
+        const pic = (its.find(p => !p.parent && JOTO_THUMB[p.code] != null) || its[0]).code;   // シリーズの本体の写真
+        return `<button class="card withimg ${seriesUse(n) ? 'fav' : ''}" data-series="${esc(n)}">${jimg(pic, 80)}<span>${esc(n)}${favBadge(seriesUse(n))}<small>${its.length}品目：${its.slice(0, 4).map(p => esc(p.code)).join('・')}${its.length > 4 ? '…' : ''}</small></span></button>`; }).join('')
+      || '<p class="note">見つかりませんでした</p>';
+  $('series').querySelectorAll('[data-series]').forEach(b => b.onclick = () => { series = b.dataset.series; pick = null; body0 = null; queue = []; renderAll(); window.scrollTo({ top: $('secSeries').offsetTop - 60, behavior: 'smooth' }); });
+  const back = $('backSeries'); if (back) back.onclick = () => { series = null; pick = null; renderAll(); };
+  // 品番（同じ品番は1つにまとめる）
+  if (!series) { $('items').innerHTML = ''; return; }
+  const seen = new Set();
+  // シリーズを開いたら、検索の言葉に関係なくそのシリーズの品目を全部出す（本体が隠れないように）
+  const its = P.filter(p => p.series === series && !seen.has(p.code) && seen.add(p.code));
+  // 本体（長さ・寸法のある物）と、役物（出隅・入隅・ジョイントカバーなど）に分ける
+  // 城東のページの「関連役物」のつながりを使う。親（本体）が書かれている物は役物
+  const parents = new Set(P.map(p => p.parent).filter(Boolean));
+  const isBody = p => !p.parent && (parents.has(p.code) || p.len > 0 || (p.size && !/^(出隅|入隅|面取出隅|中間ジョイナー|エンドキャップ|ジョイントカバー|コーナー|頂部)/.test(p.type)));
+  const bodies = its.filter(isBody), acc = its.filter(p => !isBody(p));
+  const card = p => `<button class="card withimg ${isBody(p) ? 'body' : 'acc'} ${pick && pick.code === p.code ? 'on' : ''} ${useN(p.code) ? 'fav' : ''}" data-code="${esc(p.code)}">${jimg(p.code, 64)}<span>
+      <span class="code">${esc(p.code)}</span>　${esc(typeLabel(p))}${favBadge(useN(p.code))}
+      <small>${[p.size, p.colors.length ? `${p.colors.length}色` : ''].filter(Boolean).map(esc).join('／') || '　'}</small></span></button>`;
+  let html = '';
+  if (bodies.length) {
+    html += `<h3 class="subh">本体を選ぶ</h3>` + bodies.map(card).join('');
+    // 本体を選んだら、その本体に合う役物を出す（品番が本体の品番で始まる物。無ければシリーズの役物全部）
+    const body = body0 && bodies.find(p => p.code === body0) ? bodies.find(p => p.code === body0) : null;
+    if (body) {
+      // 本体の関連役物（城東のページの並び）。なければ品番が本体で始まる物
+      let mine = P.filter(p => p.parent === body.code).filter((p, i, a) => a.findIndex(x => x.code === p.code) === i);
+      if (!mine.length) mine = acc.filter(p => p.code.startsWith(body.code));
+      const show = mine.length ? mine : acc;
+      if (show.length) html += `<h3 class="subh">${esc(body.code)} の関連役物</h3>` + show.map(card).join('');
+    } else if (acc.length) html += `<p class="note">本体を選ぶと、合う役物（出隅・入隅など）が出ます</p>`;
+  } else html += acc.map(card).join('');   // 本体のないシリーズは役物をそのまま出す
+  $('items').innerHTML = html;
+  $('items').querySelectorAll('[data-code]').forEach(b => b.onclick = () => {
+    const p = its.find(x => x.code === b.dataset.code) || P.find(x => x.code === b.dataset.code);
+    if (isBody(p)) { body0 = p.code; queue = relatedOf(p); } // 本体を選んだら、その関連役物を順番待ちにする
+    selectItem(p, `${p.code} を選びました。下で色と数量を選んでください`);
+  });
+}
+// 本体の関連役物（城東のページの並び。なければ品番が本体で始まる物）
+function relatedOf(body) {
+  let mine = P.filter(p => p.parent === body.code).filter((p, i, a) => a.findIndex(x => x.code === p.code) === i);
+  if (!mine.length) mine = P.filter(p => p.series === body.series && p.code !== body.code && p.code.startsWith(body.code))
+    .filter((p, i, a) => a.findIndex(x => x.code === p.code) === i);
+  return mine;
+}
+let queue = [];   // 本体のあとに順番に選んでいく関連役物
+function selectItem(p, msg) {
+  pick = p;
+  color = pickColor(p);
+  unitMode = 'piece'; $('qty').value = 1;
+  renderAll();
+  if (msg) notify(msg);
+  try { $('secPick').scrollIntoView({ behavior: 'smooth' }); } catch (e) { $('secPick').scrollIntoView(); }
+}
+// 次の関連役物へ進む。全部終わったら発注内容へ
+function goNext(from) {
+  const i = queue.findIndex(q => q.code === from.code);
+  const next = i >= 0 ? queue[i + 1] : queue[0];
+  if (next && (i >= 0 || !from.parent)) {
+    selectItem(next, `次は ${next.code}（${next.type}）です。いらなければ「いらない（次へ）」`);
+  } else {
+    queue = []; pick = null; renderAll();
+    notify('関連役物はここまでです。発注内容を確認してください');
+    try { $('cart').scrollIntoView({ behavior: 'smooth' }); } catch (e) { $('cart').scrollIntoView(); }
+  }
+}
+// 前に戻る：関連役物 → ひとつ前の役物 → 本体 → 商品リスト
+$('back').onclick = () => {
+  if (!pick) return;
+  const i = queue.findIndex(q => q.code === pick.code);
+  if (i > 0) { selectItem(queue[i - 1], `${queue[i - 1].code} に戻りました`); return; }
+  const body = i === 0 && body0 ? P.find(x => x.code === body0) : null;
+  if (body) { selectItem(body, `本体 ${body.code} に戻りました`); return; }
+  pick = null; renderAll();
+  try { $('secSeries').scrollIntoView({ behavior: 'smooth' }); } catch (e) {}
+};
+// 最初に選んだ色（覚えておいて、次の商品でも同じ色を選んだ状態にする）
+let firstColor = null;
+try { firstColor = JSON.parse(localStorage.getItem('joto_color')); } catch (e) {}
+function pickColor(p) {
+  if (!p.colors.length) return null;
+  if (firstColor) {
+    const same = p.colors.find(c => (firstColor.code && c.code === firstColor.code) || c.name === firstColor.name);
+    if (same) return same;
+  }
+  return p.colors[0];
+}
+function rememberColor(c) {
+  if (!c || firstColor) return;
+  firstColor = { code: c.code, name: c.name };
+  try { localStorage.setItem('joto_color', JSON.stringify(firstColor)); } catch (e) {}
+}
+
+/* 3. 色・数量 */
+function renderPick() {
+  $('secPick').style.display = pick ? '' : 'none';
+  if (!pick) return;
+  $('pickInfo').innerHTML = `${jimg(pick.code, 180)}<br><span class="code">${esc(pick.code)}</span>　${esc(pick.series)} ${esc(typeLabel(pick))}<br><span class="note">${esc(pick.size)}</span>`;
+  $('colorBox').style.display = pick.colors.length ? '' : 'none';
+  $('colors').innerHTML = pick.colors.map((c, i) => `<button class="chip ${color && color.code === c.code && color.name === c.name ? 'on' : ''}" data-ci="${i}">${esc(c.name)}${c.code ? `（${esc(c.code)}）` : ''}</button>`).join('');
+  $('colors').querySelectorAll('[data-ci]').forEach(b => b.onclick = () => { color = pick.colors[+b.dataset.ci]; renderPick(); });
+  $('colorMemo').innerHTML = firstColor ? `最初に選んだ色：<b>${esc(firstColor.name)}${firstColor.code ? '（' + esc(firstColor.code) + '）' : ''}</b>　<button class="sub" id="resetColor" style="padding:3px 8px;font-size:12px">色をえらび直す</button>` : '';
+  const rc = $('resetColor'); if (rc) rc.onclick = () => { firstColor = null; try { localStorage.removeItem('joto_color'); } catch (e) {} renderPick(); };
+  unitMode = 'piece';   // 数量は本・個で入れる（ケースは使わない）
+  const qi = queue.findIndex(q => q.code === pick.code);
+  $('skip').style.display = qi >= 0 ? '' : 'none';
+  $('queueInfo').textContent = queue.length ? (qi >= 0 ? `関連役物 ${qi + 1} / ${queue.length}` : `このあと関連役物 ${queue.length} 点に進みます`) : '';
+  const uName = unitMode === 'pack' ? (pick.packUnit || 'ケース') : (pick.unit || '個');
+  $('unitLabel').textContent = uName;
+  const q = Math.max(1, parseInt($('qty').value) || 1);
+  $('qtyNote').textContent = unitMode === 'pack' && pick.pack ? `＝ ${q * pick.pack}${pick.unit}（${pick.pack}${pick.unit}/${pick.packUnit}）` : '';
+}
+$('minus').onclick = () => { $('qty').value = Math.max(1, (parseInt($('qty').value) || 1) - 1); renderPick(); };
+$('plus').onclick = () => { $('qty').value = (parseInt($('qty').value) || 0) + 1; renderPick(); };
+$('qty').addEventListener('input', renderPick);
+$('add').onclick = () => {
+  if (!pick) return;
+  if (pick.colors.length && !color) { notify('色を選んでください'); return; }
+  const qty = Math.max(1, parseInt($('qty').value) || 1);
+  const unit = unitMode === 'pack' ? (pick.packUnit || 'ケース') : (pick.unit || '個');
+  const same = cart.find(c => c.code === pick.code && (c.colorCode || '') === (color ? color.code : '') && (c.colorName || '') === (color ? color.name : '') && c.unit === unit);
+  if (same) same.qty += qty;
+  else cart.push({ code: pick.code, name: `${pick.series} ${pick.type}`.trim(), series: pick.series, type: pick.type, kind: pick.parent ? 'acc' : 'body', colorCode: color ? color.code : '', colorName: color ? color.name : '',
+    qty, unit, pack: pick.pack, pieceUnit: pick.unit, packUnit: pick.packUnit });
+  rememberColor(color);
+  usage[pick.code] = useN(pick.code) + 1; saveUsage();
+  saveCart(); renderCart();
+  const done = pick;
+  notify(`${done.code}${color ? ' ' + color.name : ''} を ${qty}${unit} 追加しました`);
+  setTimeout(() => goNext(done), 600);   // 自動で次の項目へ
+};
+$('skip').onclick = () => { if (pick) goNext(pick); };
+
+/* 発注書用の短い品名：材質・認定の説明・重なる言葉を省く */
+function shortName(series, type) {
+  const clean = t => String(t || '')
+    .replace(/(鋼板製|アルミ製|樹脂製|ステンレス製)\s*[：:]?\s*/g, '')
+    .replace(/\d+分準耐火構造認定品/g, '')
+    .replace(/（高耐食仕様[^）]*）|（防火タイプ）|（非防火タイプ）/g, '')
+    .replace(/適応軒天厚さ\s*/g, '軒天厚')
+    .replace(/[（(]/g, ' ').replace(/[）)]/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+  let a = clean(series), b = clean(type);
+  if (/^有効換気面積/.test(b)) b = '';                          // 性能の数字は品名にいらない
+  let words = (b && !a.includes(b) ? (b.includes(a) ? b : `${a} ${b}`) : a).replace(/非?防火タイプ/g, '').split(' ').filter(Boolean);
+  // 前の言葉に含まれる言葉は省く（例：「軒ゼロタイプ 軒ゼロ」→「軒ゼロタイプ」）
+  words = words.filter((w, i) => !words.slice(0, i).some(x => x.includes(w)));
+  return words.join(' ');
+}
+// 役物のある本体は、品名を「本体」と書く
+const isMainBody = code => P.some(x => x.parent === code);
+const typeLabel = p => isMainBody(p.code) ? `本体${p.type ? `（${p.type}）` : ''}` : p.type;
+// 発注書の品名：商品名（シリーズ名）は書かず、本体・出隅・ジョイントカバーなどの部材名だけ。
+// 品名は今の商品データから引く（古いデータの「PDFダウンロード」などの文字が残らないように）
+const itemName = c => {
+  const p = P.find(x => x.code === c.code && (c.series == null || x.series === c.series)) || P.find(x => x.code === c.code);
+  const t = String(p ? p.type : (c.type || '')).replace(/PDFダウンロード|DXFダウンロード/g, '').trim();
+  if (isMainBody(c.code) || (p && !p.parent && !t)) return '本体';
+  return t || (c.series != null ? shortName(c.series, '') : c.name || '');
+};
+
+/* 4. 発注内容・発注書 */
+function renderCart() {
+  $('cartN').textContent = cart.length;
+  $('cartList').innerHTML = cart.length ? `<div class="legend"><span style="background:#eef5fc">本体</span><span style="background:#f1f8ee">関連役物</span></div>` + cart.map((c, i) => `<div class="cart-row ${c.kind || ''}">
+      ${jimg(c.code, 56)}<div style="flex:1;min-width:150px"><span class="code">${esc(c.code)}</span>${c.colorName ? `　<b>${esc(c.colorName)}</b>${c.colorCode ? `（${esc(c.colorCode)}）` : ''}` : ''}<br><span class="note">${esc(itemName(c))}</span></div>
+      <div class="q"><button data-dec="${i}">－</button><b>${c.qty}</b>${esc(c.unit)}<button data-inc="${i}">＋</button><button class="del" data-del="${i}">削除</button></div>
+    </div>`).join('') : '<p class="note">まだ何も入っていません。上で商品を選んで「発注内容に追加」を押してください。</p>';
+  $('cartList').querySelectorAll('[data-inc]').forEach(b => b.onclick = () => { cart[b.dataset.inc].qty++; saveCart(); renderCart(); });
+  $('cartList').querySelectorAll('[data-dec]').forEach(b => b.onclick = () => { const c = cart[b.dataset.dec]; c.qty = Math.max(1, c.qty - 1); saveCart(); renderCart(); });
+  $('cartList').querySelectorAll('[data-del]').forEach(b => b.onclick = () => { cart.splice(+b.dataset.del, 1); saveCart(); renderCart(); });
+  renderSheet();
+}
+const HDR = ['oTo', 'oGenba'];
+function loadHdr() {
+  let d = {}; try { d = JSON.parse(localStorage.getItem('joto_hdr')) || {}; } catch (e) {}
+  HDR.forEach(k => $(k).value = d[k] != null ? d[k] : '');
+}
+HDR.forEach(k => $(k).addEventListener('input', () => {
+  const d = {}; HDR.forEach(x => d[x] = $(x).value);
+  try { localStorage.setItem('joto_hdr', JSON.stringify(d)); } catch (e) {}
+  renderSheet();
+}));
+function renderSheet() {
+  $('sheet').innerHTML = `<div class="osheet">
+    <div class="otitle"><b>発 注 書</b></div>
+    ${$('oTo').value ? `<p style="margin:14px 0 4px;font-size:18px"><b style="border-bottom:1px solid #222;padding:0 4px 2px 0">${esc($('oTo').value)}</b>　御中</p>` : ''}
+    <p class="big" style="margin:14px 0 6px"><b class="oto">${esc($('oGenba').value) || '　　　　　　'}</b></p>
+    <table><tr><th>No</th><th>品番</th><th>品名</th><th>色</th><th>数量</th></tr>
+      ${cart.length ? cart.map((c, i) => `<tr class="${c.kind || ''}"><td class="n">${i + 1}</td><td class="code">${esc(c.code)}</td><td>${esc(itemName(c))}</td>
+        <td>${esc(c.colorName)}${c.colorCode ? `（${esc(c.colorCode)}）` : ''}</td><td class="n"><b>${c.qty} ${esc(c.unit)}</b></td></tr>`).join('')
+        : '<tr><td colspan="5" class="note">（品目なし）</td></tr>'}</table>
+  </div>`;
+}
+function sheetLines() {
+  return [['発注書'], ['送信先', $('oTo').value ? $('oTo').value + ' 御中' : ''], ['邸名', $('oGenba').value], [], ['No', '品番', '品名', '色', '色記号', '数量', '単位']]
+    .concat(cart.map((c, i) => [i + 1, c.code, itemName(c), c.colorName, c.colorCode, c.qty, c.unit]));
+}
+$('pCopy').onclick = () => {
+  try { navigator.clipboard.writeText(sheetLines().map(l => l.join('\t')).join('\n')).then(() => notify('コピーしました'), () => notify('コピーできませんでした')); }
+  catch (e) { notify('コピーできませんでした'); }
+};
+$('pCsv').onclick = async () => {
+  const text = '﻿' + sheetLines().map(l => l.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+  const name = `城東テクノ発注書_${($('oGenba').value || new Date().toISOString().slice(0, 10)).replace(/[\\/:*?"<>|]/g, '_')}.csv`;
+  try { const dl = window.claude && claude.use ? await claude.use('downloads') : null; if (dl) { await dl.save({ filename: name, data: text }); notify('保存しました'); return; } } catch (e) {}
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv' })); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(() => a.remove(), 2000);
+};
+$('pPdf').onclick = () => {
+  const el = document.querySelector('#sheet .osheet');
+  if (!el) return;
+  sendPdf(el, `城東テクノ発注書_${($('oGenba').value || new Date().toISOString().slice(0, 10)).replace(/[\\/:*?"<>|]/g, '_')}.pdf`, notify);
+};
+$('pPrint').onclick = () => { try { window.print(); } catch (e) {} notify('印刷できない場合は、ブラウザで直接開いて印刷してください'); };
+let clearArmed = false;
+$('pClear').onclick = () => {
+  if (!clearArmed) { clearArmed = true; $('pClear').textContent = 'もう一度押すと消えます'; setTimeout(() => { clearArmed = false; $('pClear').textContent = '発注内容を全部消す'; }, 3000); return; }
+  cart = []; saveCart(); firstColor = null; try { localStorage.removeItem('joto_color'); } catch (e) {} renderCart(); renderPick(); clearArmed = false; $('pClear').textContent = '発注内容を全部消す';
+};
+
+function renderAll() { renderCats(); renderSeries(); renderPick(); }
+fixOldCart();
+loadHdr(); renderAll(); renderCart();
+if (fixedRows.length) setTimeout(() => notify(`品番の間違いを直しました（${fixedRows.length}件）：${fixedRows.join('、')}。発注書をもう一度出してください`, 12000), 600);
+</script>
+<script src="vendor/html2canvas.min.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script src="pdf-send.js"></script>
+<script>
+/* 明るさのつまみ：背景とカードの明るさを変える。値はこのパソコンに覚えておく（発注書の全ページ共通） */
+(function () {
+  const r = document.getElementById('bgRange'); if (!r) return;
+  const apply = v => {
+    const t = v / 100, mix = (a, b) => Math.round(a + (b - a) * t);
+    document.documentElement.style.setProperty('--bg', `rgb(${mix(246, 112)},${mix(248, 120)},${mix(250, 130)})`);
+    document.documentElement.style.setProperty('--card', `rgb(${mix(255, 222)},${mix(255, 226)},${mix(255, 232)})`);
+  };
+  let v = 35; try { const s = localStorage.getItem('ui_bg'); if (s != null) v = +s; } catch (e) {}
+  r.value = v; apply(v);
+  r.addEventListener('input', () => { apply(+r.value); try { localStorage.setItem('ui_bg', r.value); } catch (e) {} });
+})();
+</script>
+<script src="disclaimer.js"></script>
+</body>
+</html>

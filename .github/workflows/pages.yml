@@ -1,0 +1,35 @@
+# スマホ・パソコンのブラウザで使えるページを公開する
+# web/（発注書）と site/（入口のページ）を gh-pages ブランチに置く → https://saeki64-del.github.io/-hatchu-/
+name: ブラウザ版を公開
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'site/**'
+      - '.github/workflows/pages.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  pages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: gh-pages ブランチに置く
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/site"
+          cp -r web/. site/. "$RUNNER_TEMP/site/"
+          touch "$RUNNER_TEMP/site/.nojekyll"
+          cd "$RUNNER_TEMP/site"
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "ブラウザ版を更新（${GITHUB_SHA::7}）"
+          git push -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
